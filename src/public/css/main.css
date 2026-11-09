@@ -1,0 +1,306 @@
+/* ============================================
+   ARQUIVO: src/public/css/main.css
+   ============================================ */
+   
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --slate-950: #020617;
+    --slate-900: #0f172a;
+    --emerald-500: #10b981;
+}
+
+/* ============================================
+   Scrollbar dark (WebKit)
+   ============================================ */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--slate-950);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    /* slate-700 */
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+    /* slate-600 */
+}
+
+/* ============================================
+   Fluxograma de Status
+   ============================================ */
+.status-flow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-flow .connector {
+    flex: 1;
+    height: 2px;
+    background: #334155;
+    /* slate-700 */
+    min-width: 20px;
+}
+
+.status-flow .connector.completed {
+    background: var(--emerald-500);
+}
+
+.status-flow .circle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #334155;
+    background: transparent;
+    flex-shrink: 0;
+}
+
+.status-flow .circle.completed {
+    background: var(--emerald-500);
+    border-color: var(--emerald-500);
+}
+
+.status-flow .circle.in-progress {
+    border-color: var(--emerald-500);
+    animation: pulse-emerald 1.5s ease-in-out infinite;
+}
+
+.status-flow .circle.error {
+    background: #ef4444;
+    /* red-500 */
+    border-color: #ef4444;
+}
+
+@keyframes pulse-emerald {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+}
+
+/* ============================================
+   Tabelas dark
+   ============================================ */
+.dark-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--slate-900);
+    color: #e2e8f0;
+    /* slate-200 */
+}
+
+.dark-table th,
+.dark-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #1e293b;
+    /* slate-800 */
+}
+
+.dark-table th {
+    background: #1e293b;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    /* slate-400 */
+}
+
+.dark-table tr:hover {
+    background: #1e293b;
+}
+
+.dark-table tr:last-child td {
+    border-bottom: none;
+}
+
+.card-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    filter: grayscale(0.5);
+    cursor: default;
+}
+
+/* ============================================
+   Tooltip do Fluxo de Status
+   ============================================ */
+.status-flow-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.flow-tooltip {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-width: 200px;
+    z-index: 99999;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.status-flow-wrapper:hover .flow-tooltip {
+    display: block;
+}
+
+.flow-tooltip-title {
+    font-size: 10px;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #334155;
+}
+
+.flow-tooltip-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #cbd5e1;
+    padding: 2px 0;
+}
+
+.flow-tooltip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.flow-tooltip-status {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: auto;
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+/* ============================================
+   Modal de Detalhes NFC-e
+   ============================================ */
+.detail-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    padding: 2rem 1rem;
+}
+
+.detail-modal-overlay.active {
+    display: flex;
+}
+
+.detail-modal-container {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 900px;
+    max-height: calc(100vh - 4rem);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+}
+
+.detail-modal-header {
+    flex-shrink: 0;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.detail-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.detail-modal-section {
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+}
+
+.detail-modal-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    margin-bottom: 0.75rem;
+}
+
+.detail-modal-close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.detail-modal-close:hover {
+    background: #1e293b;
+    color: #ef4444;
+}
+
+.detail-xml-block {
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-family: monospace;
+    font-size: 11px;
+    color: #94a3b8;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.detail-error-banner {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: #fca5a5;
+    font-size: 0.875rem;
+}

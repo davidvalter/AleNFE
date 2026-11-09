@@ -1,0 +1,8 @@
+curl -X POST http://localhost:3001/api/usuarios \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "SEU NOME",
+    "usuario": "SEU USER",
+    "senha": "SENHA",
+    "role": "ADMIN ou USER"
+  }'

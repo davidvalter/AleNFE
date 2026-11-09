@@ -1,0 +1,444 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url = env("DATABASE_URL")
+}
+
+model Empresa {
+  id Int @id @default(autoincrement())
+
+  // DADOS BÁSICOS
+  cnpj         String  @unique @db.VarChar(14)
+  razaoSocial  String? @db.VarChar(255)
+  nomeFantasia String? @db.VarChar(255)
+  email        String? @db.VarChar(255)
+  telefone     String? @db.VarChar(20)
+
+  // ENDEREÇO
+  logradouro      String? @db.VarChar(255)
+  numero          String? @db.VarChar(20)
+  complemento     String? @db.VarChar(255)
+  bairro          String? @db.VarChar(100)
+  cidade          String? @db.VarChar(100)
+  codigoMunicipio String? @db.VarChar(10)
+  uf              String? @db.VarChar(2)
+  cep             String? @db.VarChar(8)
+
+  // CERTIFICADO
+  certificadoPath  String?
+  certificadoSenha String?
+
+  // DISTRIBUIÇÃO DF-E
+  ultNSU String  @default("000000000000000") @db.VarChar(15)
+  maxNSU String? @db.VarChar(15)
+
+  ultimoSync DateTime?
+
+  // CONTROLE
+  createdAt DateTime @default(now())
+
+  // RELAÇÕES
+  importacoes   ImportacaoLog[]
+  notas         NFe[]
+  notasEmitidas NFeSaida[]
+  inutilizacoes Inutilizacao[]
+
+  // APIKEY PARA CONEXAO
+  apiKey         String?   @unique
+  apiKeyAtiva    Boolean   @default(true)
+  apiKeyGeradaEm DateTime?
+
+  //CONFIGURACOES DO FISCAL
+  fiscalConfig EmpresaFiscalConfig?
+
+  webhookConfig WebhookConfig?
+}
+
+model EmpresaFiscalConfig {
+  id        Int     @id @default(autoincrement())
+  empresaId Int     @unique
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  // REGIME TRIBUTÁRIO
+
+  crt  Int
+  /**
+   * 1 = Simples Nacional
+   * 2 = Simples excesso sublimite
+   * 3 = Regime Normal
+   */
+  ie   String? @db.VarChar(20)
+  im   String? @db.VarChar(20)
+  cnae String? @db.VarChar(20)
+
+  // NFC-e
+  csc   String?
+  cscId String?
+
+  // EMISSÃO
+  ambiente         Int     @default(2)
+  /**
+   * 1 = Produção
+   * 2 = Homologação
+   */
+  seriePadrao      Int     @default(1)
+  ultimaNFe        Int     @default(0)
+  naturezaOperacao String? @db.VarChar(255)
+
+  // TRIBUTAÇÃO PADRÃO
+  cfopPadrao           String?  @db.VarChar(10)
+  ncmPadrao            String?  @db.VarChar(20)
+  csosnPadrao          String?  @db.VarChar(10)
+  cstPisPadrao         String?  @db.VarChar(10)
+  cstCofinsPadrao      String?  @db.VarChar(10)
+  aliquotaPadraoICMS   Decimal? @db.Decimal(5, 2)
+  aliquotaPadraoPIS    Decimal? @db.Decimal(5, 2)
+  aliquotaPadraoCOFINS Decimal? @db.Decimal(5, 2)
+}
+
+model NFe {
+  id          Int     @id @default(autoincrement())
+  empresaId   Int
+  chaveAcesso String  @unique @db.VarChar(44)
+  numero      String  @db.VarChar(20)
+  serie       String? @db.VarChar(10)
+  modelo      String? @db.VarChar(5)
+
+  fornecedorCNPJ String? @db.VarChar(14)
+  fornecedorNome String? @db.VarChar(255)
+
+  dataEmissao     DateTime?
+  dataRecebimento DateTime?
+
+  valorProdutos Decimal? @db.Decimal(15, 2)
+  valorNota     Decimal? @db.Decimal(15, 2)
+  valorFrete    Decimal? @db.Decimal(15, 2)
+  valorDesconto Decimal? @db.Decimal(15, 2)
+
+  valorICMS   Decimal? @db.Decimal(15, 2)
+  valorIPI    Decimal? @db.Decimal(15, 2)
+  valorPIS    Decimal? @db.Decimal(15, 2)
+  valorCOFINS Decimal? @db.Decimal(15, 2)
+
+  protocolo String? @db.VarChar(50)
+  situacao  String? @db.VarChar(20)
+
+  xmlBaixado Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  empresa    Empresa        @relation(fields: [empresaId], references: [id])
+  itens      NFeItem[]
+  parcelas   NFeParcela[]
+  eventos    NFeEvento[]
+  xmlStorage NFeXMLStorage?
+
+  @@index([empresaId, dataEmissao])
+  @@index([fornecedorCNPJ])
+}
+
+model NFeItem {
+  id         Int @id @default(autoincrement())
+  nfeId      Int
+  itemNumero Int
+
+  codigo    String? @db.VarChar(60)
+  descricao String  @db.VarChar(500)
+  ncm       String? @db.VarChar(20)
+  cfop      String? @db.VarChar(10)
+  unidade   String? @db.VarChar(10)
+
+  quantidade    Decimal? @db.Decimal(15, 4)
+  valorUnitario Decimal? @db.Decimal(15, 6)
+  valorTotal    Decimal? @db.Decimal(15, 2)
+
+  icmsValor   Decimal? @db.Decimal(15, 2)
+  ipiValor    Decimal? @db.Decimal(15, 2)
+  pisValor    Decimal? @db.Decimal(15, 2)
+  cofinsValor Decimal? @db.Decimal(15, 2)
+
+  nfe NFe @relation(fields: [nfeId], references: [id])
+
+  @@unique([nfeId, itemNumero])
+}
+
+model NFeParcela {
+  id         Int       @id @default(autoincrement())
+  nfeId      Int
+  numero     String?   @db.VarChar(20)
+  vencimento DateTime?
+  valor      Decimal?  @db.Decimal(15, 2)
+
+  nfe NFe @relation(fields: [nfeId], references: [id])
+}
+
+model NFeEvento {
+  id         Int       @id @default(autoincrement())
+  nfeId      Int
+  tipoEvento String    @db.VarChar(50)
+  protocolo  String?   @db.VarChar(50)
+  dataEvento DateTime?
+  descricao  String?   @db.VarChar(255)
+
+  nfe NFe @relation(fields: [nfeId], references: [id])
+}
+
+model NFeXMLStorage {
+  id          Int      @id @default(autoincrement())
+  nfeId       Int      @unique
+  xmlOriginal String   @db.LongText
+  xmlProc     String?  @db.LongText
+  createdAt   DateTime @default(now())
+
+  nfe NFe @relation(fields: [nfeId], references: [id])
+}
+
+model ImportacaoLog {
+  id        Int     @id @default(autoincrement())
+  empresaId Int
+  status    String  @db.VarChar(20)
+  mensagem  String? @db.Text
+
+  nsuInicial String? @db.VarChar(20)
+  nsuFinal   String? @db.VarChar(20)
+
+  documentos Int @default(0)
+
+  logDetalhado String? @db.LongText // 🔥 AQUI VAI TUDO
+
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+}
+
+model NFeSaida {
+  id Int @id @default(autoincrement())
+
+  empresaId Int
+
+  uuid String @unique @default(uuid())
+
+  numero Int
+  serie  Int    @default(1)
+  modelo String @default("55")
+
+  ambiente String @default("2") // 1 produção / 2 homologação
+
+  status String @default("PENDENTE")
+  /**
+   * PENDENTE
+   * PROCESSANDO
+   * AUTORIZADA
+   * REJEITADA
+   * CANCELADA
+   * ERRO
+   */
+
+  chaveAcesso String? @unique @db.VarChar(44)
+
+  protocolo String? @db.VarChar(50)
+  recibo    String? @db.VarChar(50)
+
+  clienteDocumento String? @db.VarChar(20)
+  clienteNome      String? @db.VarChar(255)
+
+  valorProdutos Decimal? @db.Decimal(15, 2)
+  valorFrete    Decimal? @db.Decimal(15, 2)
+  valorDesconto Decimal? @db.Decimal(15, 2)
+
+  valorICMS   Decimal? @db.Decimal(15, 2)
+  valorPIS    Decimal? @db.Decimal(15, 2)
+  valorCOFINS Decimal? @db.Decimal(15, 2)
+  valorIPI    Decimal? @db.Decimal(15, 2)
+
+  valorNota Decimal? @db.Decimal(15, 2)
+
+  motivoRejeicao String? @db.Text
+
+  xmlEnvio    String? @db.LongText
+  xmlRetorno  String? @db.LongText
+  xmlProc     String? @db.LongText
+  xmlAssinado String? @db.LongText
+
+  // ✅ CONTINGÊNCIA
+  tpEmis             Int       @default(1) // 1=normal, 9=contingência offline
+  motivoContingencia String?   @db.VarChar(500)
+  dataContingencia   DateTime?
+  xmlContingencia    String?   @db.LongText
+
+  pdfPath String? @db.VarChar(500)
+
+  dataEmissao     DateTime?
+  dataAutorizacao DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  itens      NFeSaidaItem[]
+  pagamentos NFeSaidaPagamento[]
+
+  logs NFCeLog[]
+
+  @@index([empresaId, status])
+  @@index([chaveAcesso])
+}
+
+model NFeSaidaItem {
+  id            Int      @id @default(autoincrement())
+  nfeId         Int
+  itemNumero    Int
+  codigo        String?  @db.VarChar(60)
+  descricao     String   @db.VarChar(255)
+  ncm           String   @db.VarChar(20)
+  cfop          String   @db.VarChar(10)
+  cest          String?  @db.VarChar(10)
+  csosn         String?  @db.VarChar(10)
+  orig          String?  @db.VarChar(1)
+  unidade       String?  @db.VarChar(10)
+  quantidade    Decimal  @db.Decimal(15, 4)
+  valorUnitario Decimal  @db.Decimal(15, 6)
+  valorTotal    Decimal  @db.Decimal(15, 2)
+  cstICMS       String?  @db.VarChar(10)
+  cstPIS        String?  @db.VarChar(10)
+  cstCOFINS     String?  @db.VarChar(10)
+  aliquotaICMS  Decimal? @db.Decimal(5, 2)
+  valorICMS     Decimal? @db.Decimal(15, 2)
+  valorPIS      Decimal? @db.Decimal(15, 2)
+  valorCOFINS   Decimal? @db.Decimal(15, 2)
+  valorIPI      Decimal? @db.Decimal(15, 2)
+
+  nfe NFeSaida @relation(fields: [nfeId], references: [id])
+
+  @@unique([nfeId, itemNumero])
+}
+
+model NFeSaidaPagamento {
+  id Int @id @default(autoincrement())
+
+  nfeId Int
+
+  formaPagamento String  @db.VarChar(5)
+  valor          Decimal @db.Decimal(15, 2)
+
+  nfe NFeSaida @relation(fields: [nfeId], references: [id])
+}
+
+// Nova tabela
+model Inutilizacao {
+  id         Int       @id @default(autoincrement())
+  empresaId  Int
+  ano        String    @db.VarChar(2)
+  modelo     String    @db.VarChar(2)
+  serie      String    @db.VarChar(3)
+  nNFIni     Int
+  nNFFin     Int
+  xJust      String    @db.Text
+  idInut     String    @db.VarChar(50)
+  cStat      String?   @db.VarChar(3)
+  xMotivo    String?   @db.VarChar(255)
+  nProt      String?   @db.VarChar(20)
+  dhRecbto   DateTime?
+  xmlEnvio   String?   @db.LongText
+  xmlRetorno String?   @db.LongText
+  sucesso    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@index([empresaId])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  nome      String
+  usuario   String   @unique
+  senha     String
+  role      String   @default("USER") // "ADMIN" ou "USER"
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([usuario])
+  @@index([ativo])
+  @@map("Users")
+}
+
+model NFCeLog {
+  id           Int     @id @default(autoincrement())
+  nfceId       Int
+  jobId        String? @db.VarChar(50)
+  step         String  @db.VarChar(30)
+  status       String? @db.VarChar(20)
+  level        String  @default("INFO") @db.VarChar(10)
+  message      String
+  source       String? @db.VarChar(30)
+  data         Json?
+  details      String?
+  responseCode String? @db.Text
+
+  // Campos de resposta da SEFAZ
+  cStatLote   String?   @db.VarChar(5)
+  cStatProt   String?   @db.VarChar(5)
+  xMotivo     String?   @db.VarChar(255)
+  chaveAcesso String?   @db.VarChar(44)
+  protocolo   String?   @db.VarChar(20)
+  recibo      String?   @db.VarChar(20)
+  digVal      String?   @db.VarChar(100)
+  dhRecbto    DateTime?
+  verAplic    String?   @db.VarChar(30)
+  cUF         String?   @db.VarChar(2)
+
+  nfceNumber     Int?
+  protocoloSefaz String?  @db.VarChar(20)
+  context        Json?
+  createdAt      DateTime @default(now())
+
+  nfce NFeSaida @relation(fields: [nfceId], references: [id])
+
+  @@index([nfceId])
+  @@index([jobId])
+  @@index([step])
+  @@index([cStatProt])
+  @@index([createdAt])
+}
+
+model WebhookConfig {
+  id         Int      @id @default(autoincrement())
+  empresaId  Int      @unique
+  url        String   @db.VarChar(500)
+  ativo      Boolean  @default(true)
+  eventos    String   @default("*") @db.VarChar(100) // "*" = todos, ou lista separada por vírgula
+  secret     String?  @db.VarChar(255) // token HMAC para assinar requisições
+  tentativas Int      @default(3) // máx de retentativas
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  empresa Empresa      @relation(fields: [empresaId], references: [id])
+  logs    WebhookLog[]
+}
+
+model WebhookLog {
+  id               Int       @id @default(autoincrement())
+  webhookConfigId  Int
+  nfceId           Int
+  evento           String    @db.VarChar(50)
+  payload          Json
+  httpStatus       Int?
+  responseBody     String?   @db.Text
+  sucesso          Boolean   @default(false)
+  tentativa        Int       @default(1)
+  proximaTentativa DateTime?
+  createdAt        DateTime  @default(now())
+
+  webhookConfig WebhookConfig @relation(fields: [webhookConfigId], references: [id])
+
+  @@index([nfceId])
+  @@index([webhookConfigId])
+  @@index([sucesso])
+}
