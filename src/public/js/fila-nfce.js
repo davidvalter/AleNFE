@@ -458,6 +458,87 @@ async function confirmarCancelamento() {
 }
 
 // =========================
+// DOWNLOAD XML EM LOTE
+// =========================
+function openXmlDownloadModal() {
+  const modal = document.getElementById('xml-download-modal');
+  const error = document.getElementById('xml-download-error');
+  if (error) {
+    error.textContent = '';
+    error.classList.add('hidden');
+  }
+  if (modal) modal.classList.add('active');
+}
+
+function closeXmlDownloadModal() {
+  const modal = document.getElementById('xml-download-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+async function baixarXmlFiltrado() {
+  const inicio = document.getElementById('xml-data-inicio').value;
+  const fim = document.getElementById('xml-data-fim').value;
+  const selecionados = Array.from(document.querySelectorAll('input[name="xml-filtro"]:checked'))
+    .map(input => input.value);
+  const errorEl = document.getElementById('xml-download-error');
+  const button = document.getElementById('btn-baixar-xml');
+
+  if (inicio > fim) {
+    errorEl.textContent = 'A Data Início deve ser anterior ou igual à Data Fim.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  if (selecionados.length === 0) {
+    errorEl.textContent = 'Selecione ao menos um status para incluir no arquivo.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  errorEl.textContent = '';
+  errorEl.classList.add('hidden');
+  button.disabled = true;
+  button.textContent = 'Preparando XML...';
+
+  try {
+    const parametros = new URLSearchParams({
+      dataInicio: inicio,
+      dataFim: fim,
+      filtros: selecionados.join(',')
+    });
+    const resposta = await apiFetch('/api/nfce/xml/download?' + parametros.toString());
+
+    if (!resposta.ok) {
+      let mensagem = 'Não foi possível gerar o arquivo de XMLs.';
+      try {
+        const erro = await resposta.json();
+        mensagem = erro.message || mensagem;
+      } catch (_) {}
+      throw new Error(mensagem);
+    }
+
+    const arquivo = await resposta.blob();
+    if (!arquivo.size) throw new Error('O arquivo de XMLs retornado está vazio.');
+
+    const url = URL.createObjectURL(arquivo);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'NFCe-XML-' + inicio + '-a-' + fim + '.zip';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    closeXmlDownloadModal();
+  } catch (erro) {
+    console.error('Erro ao baixar XMLs NFC-e:', erro);
+    errorEl.textContent = erro.message || 'Não foi possível gerar o arquivo de XMLs.';
+    errorEl.classList.remove('hidden');
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Baixar XML';
+  }
+}
+
+// =========================
 // INICIALIZAÇÃO
 // =========================
 document.addEventListener('DOMContentLoaded', () => {
