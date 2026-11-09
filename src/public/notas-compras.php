@@ -91,8 +91,10 @@ $totalNotas = $data['total'] ?? count($notas);
                                 <?php
                                 $situacao = $nota['situacao'] ?? '';
                                 if ($situacao === "XML_COMPLETO"): ?>
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">XML_COMPLETO</span>
+                                    <button type="button"
+                                        onclick="baixarXmlNota(<?= (int) ($nota['id'] ?? 0) ?>, this)"
+                                        title="Baixar XML desta nota"
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">XML_COMPLETO</button>
                                 <?php elseif ($situacao === "RESUMO"): ?>
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">RESUMO</span>
@@ -152,7 +154,42 @@ $totalNotas = $data['total'] ?? count($notas);
 
 <!-- JavaScript Adaptado -->
 <!-- JavaScript Adaptado -->
+<script src="/js/api-auth.js"></script>
 <script>
+    async function baixarXmlNota(notaId, botao) {
+        const textoOriginal = botao.textContent;
+        botao.disabled = true;
+        botao.textContent = 'Baixando...';
+
+        try {
+            const resposta = await apiFetch(`/api/notas/${encodeURIComponent(notaId)}/xml`);
+            if (!resposta.ok) {
+                let mensagem = 'Não foi possível baixar o XML.';
+                try {
+                    const erro = await resposta.json();
+                    mensagem = erro.message || mensagem;
+                } catch (_) {}
+                throw new Error(mensagem);
+            }
+
+            const arquivo = await resposta.blob();
+            const url = URL.createObjectURL(arquivo);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `NFe-${notaId}.xml`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (erro) {
+            console.error('Erro ao baixar XML da nota:', erro);
+            alert(erro.message || 'Não foi possível baixar o XML desta nota.');
+        } finally {
+            botao.disabled = false;
+            botao.textContent = textoOriginal;
+        }
+    }
+
     function verItens(itens) {
         let html = "";
 
