@@ -15,6 +15,7 @@ import { monitoringRoutes } from './modules/fiscal/nfce/routes/monitoring.routes
 import nfceApiRoutes from './modules/fiscal/nfce/routes/nfce-api.routes';
 import { empresaRoutes } from './routes/empresas.route';
 import { webhookConfigRoutes } from './modules/fiscal/core/webhook/webhook-config.routes';
+import { dashboardRoutes } from './routes/dashboard.route';
 
 
 export async function buildApp() {
@@ -54,6 +55,7 @@ export async function buildApp() {
   await app.register(empresaRoutes, { preHandler: authPreHandler });
   await app.register(userRoutes);
   await app.register(webhookConfigRoutes);
+  await app.register(dashboardRoutes, { prefix: '/api', preHandler: authPreHandler });
 
   return app;
 }
