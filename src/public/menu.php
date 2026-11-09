@@ -21,13 +21,11 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <h3 class="text-xl font-semibold text-white">Empresas</h3>
                     </div>
-                    <span
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">12
-                        ativas</span>
+                    <span id="empresas-total" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">Carregando...</span>
                 </div>
                 <p class="text-slate-400 text-sm">Gerenciamento de cadastros e certificados</p>
                 <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                    <span class="bg-emerald-500/10 px-2 py-1 rounded">5 pendentes</span>
+                    <span id="empresas-pendentes" class="bg-emerald-500/10 px-2 py-1 rounded">Carregando...</span>
                 </div>
             </div>
         </a>
@@ -44,13 +42,11 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <h3 class="text-xl font-semibold text-white">Fila NFC-e (65)</h3>
                     </div>
-                    <span
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">8
-                        ativas</span>
+                    <span id="nfce-total" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">Carregando...</span>
                 </div>
                 <p class="text-slate-400 text-sm">Monitoramento e emissão de cupons fiscais</p>
                 <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                    <span class="bg-yellow-500/10 px-2 py-1 rounded">2 pendentes</span>
+                    <span id="nfce-pendentes" class="bg-yellow-500/10 px-2 py-1 rounded">Carregando...</span>
                 </div>
             </div>
         </a>
@@ -67,13 +63,11 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <h3 class="text-xl font-semibold text-white">Fila NFe (55)</h3>
                     </div>
-                    <span
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">15
-                        ativas</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">Em breve</span>
                 </div>
                 <p class="text-slate-400 text-sm">Gestão de notas fiscais eletrônicas</p>
                 <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                    <span class="bg-red-500/10 px-2 py-1 rounded">3 pendentes</span>
+                    <span class="bg-red-500/10 px-2 py-1 rounded">Módulo ainda não disponível</span>
                 </div>
             </div>
         </a>
@@ -90,13 +84,11 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <h3 class="text-xl font-semibold text-white">Fila NFSe</h3>
                     </div>
-                    <span
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">6
-                        ativas</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">Em breve</span>
                 </div>
                 <p class="text-slate-400 text-sm">Gestão de notas de serviço</p>
                 <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                    <span class="bg-yellow-500/10 px-2 py-1 rounded">1 pendente</span>
+                    <span class="bg-yellow-500/10 px-2 py-1 rounded">Módulo ainda não disponível</span>
                 </div>
             </div>
         </a>
@@ -113,17 +105,17 @@ require_once __DIR__ . '/includes/header.php';
                         </svg>
                         <h3 class="text-xl font-semibold text-white">Notas de Compra</h3>
                     </div>
-                    <span
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">4
-                        ativas</span>
+                    <span id="compras-total" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300">Carregando...</span>
                 </div>
                 <p class="text-slate-400 text-sm">Visão de notas emitidas por fornecedores</p>
                 <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                    <span class="bg-blue-500/10 px-2 py-1 rounded">2 pendentes</span>
+                    <span id="compras-pendentes" class="bg-blue-500/10 px-2 py-1 rounded">Carregando...</span>
                 </div>
             </div>
         </a>
 
     </div>
 </main>
+<script src="/js/api-auth.js"></script>
+<script src="/js/menu.js"></script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
