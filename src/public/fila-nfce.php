@@ -24,6 +24,10 @@ include 'includes/header.php';
                     <p class="text-slate-400 text-sm">Acompanhamento em tempo real das notas fiscais</p>
                 </div>
             </div>
+            <button type="button" onclick="openXmlDownloadModal()"
+                class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition text-sm font-semibold shadow-lg shadow-emerald-500/20">
+                Download XML
+            </button>
         </div>
 
         <!-- Tabela de Monitoramento Glassmorphism -->
@@ -93,6 +97,47 @@ include 'includes/header.php';
     </div>
 </div>
 
+<!-- Modal de Download XML -->
+<div id="xml-download-modal" class="detail-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="xml-download-title">
+    <div class="detail-modal-container">
+        <div class="detail-modal-header">
+            <h2 id="xml-download-title" class="text-lg font-semibold text-slate-200">Download XML</h2>
+            <button type="button" class="detail-modal-close" onclick="closeXmlDownloadModal()" aria-label="Fechar">&times;</button>
+        </div>
+        <form id="xml-download-form" class="detail-modal-body" onsubmit="event.preventDefault(); baixarXmlFiltrado();">
+            <p class="text-sm text-slate-400 mb-4">Escolha o período e os tipos de documento. A data final é inclusiva.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <label class="block text-sm text-slate-300">
+                    Data Início
+                    <input id="xml-data-inicio" name="dataInicio" type="date" required
+                        class="mt-1 w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </label>
+                <label class="block text-sm text-slate-300">
+                    Data Fim
+                    <input id="xml-data-fim" name="dataFim" type="date" required
+                        class="mt-1 w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </label>
+            </div>
+            <fieldset>
+                <legend class="text-sm font-medium text-slate-300 mb-2">Status dos documentos</legend>
+                <div class="space-y-2 text-sm text-slate-300">
+                    <label class="flex items-start gap-2"><input type="checkbox" name="xml-filtro" value="autorizadas" class="mt-1 accent-emerald-500"><span>Autorizadas</span></label>
+                    <label class="flex items-start gap-2"><input type="checkbox" name="xml-filtro" value="canceladas" class="mt-1 accent-emerald-500"><span>Canceladas</span></label>
+                    <label class="flex items-start gap-2"><input type="checkbox" name="xml-filtro" value="erro" class="mt-1 accent-emerald-500"><span>Com erro (inclui rejeitadas)</span></label>
+                    <label class="flex items-start gap-2"><input type="checkbox" name="xml-filtro" value="inutilizadas" class="mt-1 accent-emerald-500"><span>Inutilizadas (homologadas)</span></label>
+                </div>
+            </fieldset>
+            <p id="xml-download-error" class="hidden text-sm text-rose-400 mt-4" role="alert"></p>
+            <div class="flex items-center justify-end gap-3 mt-6">
+                <button type="button" onclick="closeXmlDownloadModal()"
+                    class="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors">Fechar</button>
+                <button id="btn-baixar-xml" type="submit"
+                    class="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors">Baixar XML</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal de Cancelamento -->
 <div id="cancel-modal" class="detail-modal-overlay">
     <div class="detail-modal-container">
@@ -120,6 +165,7 @@ include 'includes/header.php';
     </div>
 </div>
 
+<script src="/js/api-auth.js"></script>
 <script src="/js/fila-nfce.js?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/js/fila-nfce.js') ?>"></script>
 
 <style>
