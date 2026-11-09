@@ -557,6 +557,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('cancel-char-count').textContent = `${just.value.length}/255`;
     });
   }
+  const xmlDownloadModal = document.getElementById('xml-download-modal');
+  if (xmlDownloadModal) {
+    xmlDownloadModal.addEventListener('click', (e) => {
+      if (e.target === xmlDownloadModal) closeXmlDownloadModal();
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeXmlDownloadModal();
+  });
   // NOVO: fechar modal de cancelamento por clique fora
   const cancelModal = document.getElementById('cancel-modal');
   if (cancelModal) {
