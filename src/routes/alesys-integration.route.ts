@@ -23,7 +23,7 @@ export async function alesysIntegrationRoutes(app: FastifyInstance) {
 
       const pageRaw = request.query.page ?? "1";
       const limitRaw = request.query.limit ?? "50";
-      if (!/^\\d+$/.test(pageRaw) || !/^\\d+$/.test(limitRaw)) {
+      if (!/^\d+$/.test(pageRaw) || !/^\d+$/.test(limitRaw)) {
         return reply.status(400).send({
           success: false,
           message: "Os parâmetros page e limit devem ser inteiros positivos."
