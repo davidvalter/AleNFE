@@ -21,10 +21,22 @@ export async function alesysIntegrationRoutes(app: FastifyInstance) {
         });
       }
 
-      const page = Math.max(1, Number.parseInt(request.query.page ?? "1", 10) || 1);
+      const page = Number.parseInt(request.query.page ?? "1", 10);
       const requestedLimit = Number.parseInt(request.query.limit ?? "50", 10) || 50;
+      if (!Number.isSafeInteger(page) || page < 1) {
+        return reply.status(400).send({
+          success: false,
+          message: "O parâmetro page deve ser um inteiro maior que zero."
+        });
+      }
       const limit = Math.min(100, Math.max(1, requestedLimit));
       const skip = (page - 1) * limit;
+      if (!Number.isSafeInteger(skip)) {
+        return reply.status(400).send({
+          success: false,
+          message: "A página solicitada excede o limite permitido."
+        });
+      }
 
       try {
         const where = { empresaId };
