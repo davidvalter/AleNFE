@@ -25,6 +25,22 @@ Centralizar a comunicação fiscal com a SEFAZ, reduzindo a necessidade de cada 
 
 A documentação técnica cita NF-e modelo 55, cancelamento, inutilização, carta de correção e MDF-e como possibilidades de evolução. Ela não os apresenta como funcionalidades já implementadas neste projeto.
 
+## Integração com o Alesys
+
+O serviço oferece endpoints de leitura para importação manual de notas de compra pelo Alesys ERP. As rotas são independentes da autenticação JWT usada pelas rotas de interface e usam API Key no header `x-api-key`. A empresa autorizada é determinada pela própria chave ativa; não envie nem aceite `empresaId` como parâmetro para selecionar outra empresa.
+
+- `GET /api/integracoes/alesys/notas-compras?page=1&limit=100`: lista notas e itens da empresa vinculada à chave. `limit` é limitado a 100 por página.
+- `GET /api/integracoes/alesys/notas-compras/{id}/xml`: devolve o XML processado (ou original, se não houver processado) quando a nota estiver em `XML_COMPLETO`. O ID também é validado dentro do escopo da empresa da API Key; notas de outra empresa não são expostas.
+
+Exemplo de consulta:
+
+```bash
+curl -H "x-api-key: SUA_API_KEY" \
+  "https://SEU_ALE-NFE/api/integracoes/alesys/notas-compras?page=1&limit=100"
+```
+
+Essas rotas leem notas do modelo `NFe` e seus itens; não alteram notas, XML ou estoque. Se o XML ainda não estiver completo, a rota de download responde HTTP 404 para que o Alesys mantenha a nota pendente de revisão.
+
 ## Tecnologias
 
 - **Runtime e linguagem:** Node.js (18 ou superior) e TypeScript.
