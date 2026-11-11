@@ -8,6 +8,7 @@ import { userRoutes } from './routes/user.routes';
 import sefazRoutes from './routes/sefaz.routes';
 import { logsRoutes } from './routes/logs.route';
 import { notasRoutes } from './routes/notas.route';
+import { alesysIntegrationRoutes } from './routes/alesys-integration.route';
 import { inputNFCeRoutes } from './modules/fiscal/nfce/routes/input-nfce.routes';
 import { nfceRoutes } from './modules/fiscal/nfce/routes/nfce-saida.routes';
 import { nfceEventosRoutes } from "./modules/fiscal/nfce/routes/nfce-eventos.routes";
@@ -48,6 +49,7 @@ export async function buildApp() {
   await app.register(sefazRoutes, { prefix: '/sefaz', preHandler: authPreHandler });
   await app.register(logsRoutes, { prefix: '/api', preHandler: authPreHandler });
   await app.register(notasRoutes, { prefix: '/api', preHandler: authPreHandler });
+  await app.register(alesysIntegrationRoutes, { prefix: '/api/integracoes/alesys' });
   await app.register(inputNFCeRoutes, { prefix: '/input' });
   await app.register(nfceRoutes);
   await app.register(nfceEventosRoutes);
