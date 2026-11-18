@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import crypto from 'crypto';
 import * as tls from 'tls';
+import { obterStatusCertificado } from '../modules/fiscal/core/certificado/certificado-status.service';
 
 const CERT_DIR = process.env.CERT_DIR || '/www/wwwroot/alenfe.alecriminteligente.com.br/certs';
 
@@ -24,7 +25,7 @@ export async function empresaRoutes(app: FastifyInstance) {
     // GET /api/empresas
     // =========================
     app.get('/api/empresas', async () => {
-        return await prisma.empresa.findMany({
+        const empresas = await prisma.empresa.findMany({
             select: {
                 id: true,
                 razaoSocial: true,
@@ -32,9 +33,16 @@ export async function empresaRoutes(app: FastifyInstance) {
                 cnpj: true,
                 apiKey: true,
                 apiKeyAtiva: true,
-                apiKeyGeradaEm: true
+                apiKeyGeradaEm: true,
+                certificadoPath: true,
+                certificadoSenha: true
             }
         });
+
+        return empresas.map(({ certificadoPath, certificadoSenha, ...empresa }) => ({
+            ...empresa,
+            ...obterStatusCertificado(certificadoPath, certificadoSenha)
+        }));
     });
 
     // =========================
