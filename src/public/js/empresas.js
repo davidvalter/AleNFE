@@ -111,9 +111,55 @@ function formatarCNPJ(cnpj) {
     return `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}`;
 }
 
+function formatarDataValidadeCertificado(data) {
+    if (!data) return null;
+    const dataValidade = new Date(data);
+    if (Number.isNaN(dataValidade.getTime())) return null;
+    return dataValidade.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
+
 function statusCertificado(empresa) {
-    if (empresa.certificadoFile || empresa.certificadoSenha) return 'Válido';
-    return 'Pendente';
+    const dataFim = formatarDataValidadeCertificado(empresa.validoAte);
+    const dataInicio = formatarDataValidadeCertificado(empresa.validoDesde);
+
+    switch (empresa.status) {
+        case 'VALIDO':
+            return {
+                texto: dataFim ? 'Válido até ' + dataFim : 'Válido',
+                classe: 'bg-emerald-900/50 text-emerald-300',
+                titulo: dataFim ? 'Certificado dentro da validade até ' + dataFim : 'Certificado dentro da validade'
+            };
+        case 'EXPIRADO':
+            return {
+                texto: dataFim ? 'Expirado em ' + dataFim : 'Expirado',
+                classe: 'bg-rose-900/50 text-rose-300',
+                titulo: 'O prazo de validade do certificado terminou'
+            };
+        case 'NAO_VIGENTE':
+            return {
+                texto: dataInicio ? 'Vigente a partir de ' + dataInicio : 'Ainda não vigente',
+                classe: 'bg-blue-900/50 text-blue-300',
+                titulo: 'O certificado ainda não está dentro do período de validade'
+            };
+        case 'ARQUIVO_AUSENTE':
+            return {
+                texto: 'Arquivo ausente',
+                classe: 'bg-rose-900/50 text-rose-300',
+                titulo: 'O arquivo PFX cadastrado não foi encontrado no servidor'
+            };
+        case 'INVALIDO':
+            return {
+                texto: 'Inválido',
+                classe: 'bg-rose-900/50 text-rose-300',
+                titulo: 'Não foi possível validar o PFX ou sua senha'
+            };
+        default:
+            return {
+                texto: 'Pendente',
+                classe: 'bg-yellow-900/50 text-yellow-300',
+                titulo: 'Certificado ou senha ainda não cadastrados'
+            };
+    }
 }
 
 function renderEmpresas() {
@@ -124,6 +170,7 @@ function renderEmpresas() {
     }
     emptyState.classList.add('hidden');
     empresas.forEach(emp => {
+        const certificado = statusCertificado(emp);
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-800/30 transition-colors border-b border-slate-700/30';
         tr.innerHTML = `
@@ -131,8 +178,8 @@ function renderEmpresas() {
             <td class="px-6 py-4 text-sm text-slate-200">${emp.razaoSocial || '-'}</td>
             <td class="px-6 py-4 text-sm text-slate-300">${emp.uf || '-'}</td>
             <td class="px-6 py-4 text-sm">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusCertificado(emp) === 'Válido' ? 'bg-emerald-900/50 text-emerald-300' : 'bg-yellow-900/50 text-yellow-300'}">
-                    ${statusCertificado(emp)}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${certificado.classe}" title="${certificado.titulo}">
+                    ${certificado.texto}
                 </span>
             </td>
             <td class="px-6 py-4 text-sm">
