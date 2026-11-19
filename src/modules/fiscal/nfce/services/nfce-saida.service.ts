@@ -14,10 +14,11 @@ export async function criarNFCeSaida(data: NFCeInputDTO) {
     data: {
       empresaId: data.empresaId,
       modelo: "65",
+      ambiente: String(data.ambiente ?? 2),
       numero: 0,
       serie: 1,
-      clienteNome: data.cliente.nome,
-      clienteDocumento: data.cliente.cpfCnpj,
+      clienteNome: data.cliente?.nome || 'CONSUMIDOR',
+      clienteDocumento: data.cliente?.cpfCnpj || null,
       valorProdutos: valorTotal,
       valorNota: valorTotal,
       status: "PENDENTE",
