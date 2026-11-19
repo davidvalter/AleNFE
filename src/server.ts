@@ -13,7 +13,7 @@ async function start() {
     console.log('[NFC-e Queue] Fila e sync de contingência inicializados');
 
     const app = await buildApp();
-    await app.listen({ port: Number(process.env.PORT || 3001), host: '0.0.0.0' });
+    await app.listen({ port: Number(process.env.PORT || 3001), host: process.env.HOST || '127.0.0.1' });
     console.log('AleNFE service running');
 
     // ✅ Shutdown graceful — só para o worker quando o processo for encerrado
