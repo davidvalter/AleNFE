@@ -2,7 +2,6 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../../../../config/database';
 import { criarNFCeSaida } from '../services/nfce-saida.service';
-import { enqueueNfceEmission } from '../queues/nfce-queue';
 import { NFCeInputSchema, NFCeInputDTO, validateNFeInput } from '../../dto/nfce-input.dto';
 import { apiKeyAuth } from '../../core/middlewares/api-key-auth';
 import { Value } from '@sinclair/typebox/value';
@@ -24,26 +23,55 @@ export async function nfceRoutes(app: FastifyInstance): Promise<void> {
         return reply.status(400).send({ success: false, errors });
       }
 
-      // Validação adicional
+      // Validação adicional dos itens e pagamentos
       const validationError = validateNFeInput(input);
       if (validationError) {
         return reply.status(400).send({ success: false, errors: validationError.errors });
       }
 
-      // ✅ empresaId vem da API Key, NÃO do body
+      const empresaId = Number(empresa.id);
+      const fiscalConfig = await prisma.empresaFiscalConfig.findUnique({
+        where: { empresaId }
+      });
+      if (!fiscalConfig || ![1, 2].includes(Number(fiscalConfig.ambiente))) {
+        return reply.status(409).send({
+          success: false,
+          error: 'Ambiente fiscal da empresa não configurado no ALENFE.'
+        });
+      }
+
+      const ambiente = Number(fiscalConfig.ambiente);
+      if (input.ambiente !== undefined && Number(input.ambiente) !== ambiente) {
+        return reply.status(409).send({
+          success: false,
+          error: `Ambiente divergente: PDV=${input.ambiente}, ALENFE=${ambiente}. Alinhe ALENFE_AMBIENTE e a configuração fiscal da empresa.`
+        });
+      }
+
+      const cpfCnpj = String(input.cliente?.cpfCnpj ?? '').replace(/\\D/g, '');
+      if (ambiente === 2 && !/^\\d{11}$|^\\d{14}$/.test(cpfCnpj)) {
+        return reply.status(400).send({
+          success: false,
+          error: 'Em Homologação, informe CPF (11 dígitos) ou CNPJ (14 dígitos).'
+        });
+      }
+
+      // Na produção, o destinatário da NFC-e é sempre o consumidor não identificado.
+      const cliente = ambiente === 1
+        ? { nome: 'CONSUMIDOR' }
+        : { cpfCnpj, nome: 'CONSUMIDOR' };
+
+      // empresaId e ambiente são definidos pela configuração fiscal do ALENFE.
       const dados: NFCeInputDTO = {
-        empresaId: empresa.id,    // ← segurança: sobrescreve qualquer valor do body
-        cliente: input.cliente,
+        empresaId,
+        ambiente,
+        cliente,
         itens: input.itens,
         pagamentos: input.pagamentos,
       };
 
+      // criarNFCeSaida registra e enfileira a emissão.
       const nfce = await criarNFCeSaida(dados);
-
-      // Enfileirar emissão (não bloquear resposta)
-      enqueueNfceEmission(nfce.id).catch((err) => {
-        console.error('Erro ao enfileirar emissão NFCe:', err);
-      });
 
       return reply.status(201).send({ success: true, id: nfce.id });
     } catch (error) {
