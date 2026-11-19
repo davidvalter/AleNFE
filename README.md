@@ -110,7 +110,30 @@ Para compilar e iniciar a versão de produção:
     npm run build
     npm start
 
-O serviço usa a porta definida em PORT (por padrão, 3001) e inicia o worker BullMQ junto com o processo HTTP. O repositório também documenta deploy com PM2; consulte README-DEPLOY.md.
+O serviço usa a porta definida em PORT (por padrão, 3001), inicia o worker BullMQ junto com o processo HTTP e, por padrão, escuta apenas em 127.0.0.1. A interface do host pode ser configurada por HOST. O repositório também documenta deploy com PM2; consulte README-DEPLOY.md.
+
+## Deploy atrás do Nginx (aaPanel)
+
+Há dois modelos de virtual host de referência em `deploy/nginx/`:
+
+- `alenfe.conf`: serve a interface PHP de `src/public` e encaminha `/api/` e `/sefaz/` para o Fastify. O painel usa o domínio principal como mesma origem para suas chamadas de API.
+- `backend.alenfe.conf`: encaminha todas as rotas do domínio de backend para o Fastify, incluindo os endpoints de integração externa. As rotas de integração Alesys usam `x-api-key`; outros endpoints externos também devem ser avaliados pelo middleware definido em cada rota.
+
+### Instalação
+
+1. Configure o processo Node/PM2 com `PORT=3001` e `HOST=127.0.0.1`. O servidor agora usa loopback por padrão. Mantenha a porta 3001 bloqueada para conexões externas no firewall; o Nginx local é quem deve acessá-la.
+2. Copie os blocos `server` do arquivo correspondente para a configuração de cada site no aaPanel. Ajuste o diretório `root`, os caminhos dos certificados e o socket PHP-FPM (o exemplo usa `/tmp/php-cgi-83.sock`). Preserve os includes de validação ACME/Let's Encrypt que o aaPanel gerar e não inclua o arquivo completo dentro de um diretório de extensões que espere apenas diretivas de `location`.
+3. Confirme que os certificados cobrem os respectivos nomes DNS e que ambos apontam para o servidor. O tráfego HTTP é redirecionado para HTTPS; as configurações usam TLS 1.2 ou 1.3 e não armazenam respostas do proxy em cache.
+4. Valide a configuração com `nginx -t` e recarregue o Nginx pelo aaPanel após a validação.
+5. Confirme que a interface PHP acessa o Fastify em `127.0.0.1:3001`, e que os sistemas externos usam o domínio de backend e enviam suas credenciais conforme o contrato da rota.
+
+Os arquivos são modelos para este servidor aaPanel, não configurações universais: revise caminhos, portas, certificados, limites de upload e includes antes de ativá-los. O domínio principal encaminha somente `/api/` e `/sefaz/`; o domínio `backend` encaminha toda a árvore Fastify. Portanto, o domínio de backend é um ponto de entrada público para todas as rotas do Node, não um controle de acesso por si só. A porta 3001 precisa permanecer inacessível pela rede externa.
+
+### Limite de segurança atual a revisar
+
+O Nginx termina TLS e encaminha requisições; ele não autentica usuários nem substitui a autorização das rotas. A implementação atual inclui endpoints sem autenticação explícita, entre eles a leitura de NFC-e por ID (`/nfce/:id` e `/nfce/:id/consulta`), as rotas de consulta/logs em `/api/nfce`, o cancelamento web `/api/nfce/:id/cancelar-web`, monitoramento de fila e configuração de webhooks. Isso permite acesso pela rede a dados ou ações conforme a rota, mesmo com a porta 3001 fechada, pois os domínios encaminham as chamadas ao Node.
+
+Também há registros em `src/app.ts` que passam `preHandler` como opção de `register`; no Fastify, essa opção é entregue ao plugin, mas não instala um hook automaticamente. A proteção deve ser aplicada como hook no escopo do plugin ou como `preHandler` de cada rota. Antes de expor esses virtual hosts, revise e corrija a autenticação/autorização das rotas sensíveis, preservando as rotas de integração externa necessárias e protegidas por chave de API. Consulte a [documentação de plugins do Fastify](https://fastify.dev/docs/latest/Reference/Plugins/) e a [documentação de hooks](https://fastify.dev/docs/latest/Reference/Hooks/).
 
 ## Observações
 
