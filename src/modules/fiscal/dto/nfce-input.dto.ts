@@ -12,12 +12,13 @@ export const EnderecoSchema = Type.Object({
 }, { additionalProperties: false });
 
 export const ClienteSchema = Type.Object({
-  cpfCnpj: Type.Optional(Type.String({ pattern: '^\\d{11}$|^\\d{14}$' })),
-  nome: Type.Optional(Type.String({ minLength: 1 })),
-  endereco: Type.Optional(EnderecoSchema)
+  cpfCnpj: Type.String({ pattern: '^\\d{11}$|^\\d{14}$' }),
+  nome: Type.String({ minLength: 1 }),
+  endereco: EnderecoSchema
 }, { additionalProperties: false });
 
 export const ItemSchema = Type.Object({
+  // OBRIGATÓRIOS
   codigo: Type.String(),
   descricao: Type.String(),
   ncm: Type.String({ pattern: '^\\d{8}$' }),
@@ -26,6 +27,7 @@ export const ItemSchema = Type.Object({
   quantidade: Type.Number({ exclusiveMinimum: 0 }),
   valorUnitario: Type.Number({ exclusiveMinimum: 0 }),
   valorTotal: Type.Number({ exclusiveMinimum: 0 }),
+  // OPCIONAIS — tributação por produto (se não enviado, usa defaults da empresa)
   cest: Type.Optional(Type.String({ pattern: '^\\d{7}$' })),
   csosn: Type.Optional(Type.String({ pattern: '^\\d{3}$' })),
   orig: Type.Optional(Type.String({ pattern: '^[0-2]$' })),
@@ -42,8 +44,7 @@ export const PagamentoSchema = Type.Object({
 
 export const NFCeInputSchema = Type.Object({
   empresaId: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
-  ambiente: Type.Optional(Type.Union([Type.Literal(1), Type.Literal(2)])),
-  cliente: Type.Optional(ClienteSchema),
+  cliente: ClienteSchema,
   itens: Type.Array(ItemSchema, { minItems: 1 }),
   pagamentos: Type.Array(PagamentoSchema, { minItems: 1 })
 }, { additionalProperties: false });
@@ -59,6 +60,7 @@ export function validateNFeInput(data: unknown): { success: false; errors: strin
   const input = data as NFCeInputDTO;
   const errors: string[] = [];
 
+  // Validate item valorTotal = quantidade * valorUnitario (- desconto se houver)
   input.itens.forEach((item, index) => {
     const expectedTotal = item.quantidade * item.valorUnitario;
     const desconto = item.valorDesconto || 0;
@@ -67,6 +69,7 @@ export function validateNFeInput(data: unknown): { success: false; errors: strin
     }
   });
 
+  // Validate sum of pagamentos >= sum of itens
   const sumItens = input.itens.reduce((sum, item) => sum + item.valorTotal, 0);
   const sumPagamentos = input.pagamentos.reduce((sum, pag) => sum + pag.valor, 0);
   if (sumPagamentos + 0.001 < sumItens) {
