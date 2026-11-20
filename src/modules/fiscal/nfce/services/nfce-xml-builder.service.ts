@@ -173,10 +173,7 @@ export async function gerarXMLNFCe(nfeId: number) {
   // DESTINATÁRIO
   // =========================
   const dest = infNFeNode.ele("dest");
-  // Em produção, consumidor não identificado não deve gerar tag CPF/CNPJ vazia.
-  if (doc) {
-    dest.ele(tagDoc).txt(doc).up();
-  }
+  dest.ele(tagDoc).txt(doc).up();
   dest.ele("xNome").txt(nota.clienteNome || "CONSUMIDOR").up();
   dest.ele("indIEDest").txt("9").up();
   dest.up();
